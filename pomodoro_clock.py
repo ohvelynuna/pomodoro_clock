@@ -7,13 +7,13 @@ import customtkinter
 
 
 
-set_break = 10 # 5 minutes
+set_break = 60 * 5 # 5 minutes
 
 class PomodoroClock:
     def __init__(self, master):
         self.master = master
         self.master.title("Pomodoro Clock")
-        self.work_time = 10  # 25 minutes
+        self.work_time = 60 * 25  # 25 minutes
         self.break_time = set_break  # 5 minutes
         self.current_time = self.work_time
         self.banked_break_time = 0
@@ -107,5 +107,5 @@ root = customtkinter.CTk()
 clock = PomodoroClock(root)
 
 root.attributes('-topmost', 1)
-root.geometry("250x300")
+root.geometry("250x320")
 root.mainloop()
