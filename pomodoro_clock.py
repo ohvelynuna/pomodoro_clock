@@ -3,7 +3,6 @@ import time
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter import font as tkfont
-import customtkinter
 
 
 
@@ -22,22 +21,22 @@ class PomodoroClock:
         self.break_true = True
         self.timer = None
         self.work_streak = 0
-        self.label = customtkinter.CTkLabel(self.master, text=self.time_to_string(self.current_time), font=("Helvetica", 48))
+        self.label = tk.Label(self.master, text=self.time_to_string(self.current_time), font=("Helvetica", 48))
         self.label.pack(pady=20)
 
-        self.label2 = customtkinter.CTkLabel(self.master, text=self.work_streak_statement(self.work_streak), font=("Helvetica", 10))
+        self.label2 = tk.Label(self.master, text=self.work_streak_statement(self.work_streak), font=("Helvetica", 10))
         self.label2.pack(pady=10)
 
-        self.start_button = customtkinter.CTkButton(self.master, text="Start", command=self.start)
+        self.start_button = tk.Button(self.master, text="Start", command=self.start)
         self.start_button.pack(padx=50, pady=0)
 
-        self.stop_button = customtkinter.CTkButton(self.master, text="Stop", command=self.stop)
+        self.stop_button = tk.Button(self.master, text="Stop", command=self.stop)
         self.stop_button.pack(padx=50, pady=10)
 
-        self.bank_button = customtkinter.CTkButton(self.master, text="Bank", command=self.bank)
+        self.bank_button = tk.Button(self.master, text="Bank", command=self.bank)
         self.bank_button.pack(padx=50, pady=0)
 
-        self.use_bank_button = customtkinter.CTkButton(self.master, text="Use up saved break", command=self.use_bank)
+        self.use_bank_button = tk.Button(self.master, text="Use up saved break", command=self.use_bank)
         self.use_bank_button.pack(padx=50, pady=10)
 
     def time_to_string(self, time):
@@ -103,7 +102,8 @@ class PomodoroClock:
                 self.master.after_cancel(self.timer)
                 self.timer = None
 
-root = customtkinter.CTk()
+root = tk.Tk()
+
 clock = PomodoroClock(root)
 
 root.attributes('-topmost', 1)
