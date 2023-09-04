@@ -6,6 +6,9 @@
 
 <img width="465" alt="image" src="https://github.com/ohvelynuna/pomodoro_clock/assets/132867898/530d846d-3457-4675-a012-d6615b5cd37b">
 
+With the log book feel free to convert it into some trend chart and analyze your work habit (not sure what you can learn from it tho)
+
+
 ## TODO
 ## Overall
 
