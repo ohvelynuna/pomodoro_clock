@@ -8,6 +8,8 @@ import pandas as pd
 import datetime
 import pathlib
 import os
+import random
+import threading
 
 
 
@@ -15,19 +17,11 @@ if not os.path.exists('log'):
     os.makedirs('log')
     print("created folder name log under this dir")
 
-def validate_int_work(P):
+def validate_int(P):
     if P == '':
         return True
     if P.isdigit():
         P = int(P)
-        return True
-    else:
-        return False
-
-def validate_int_break(P):
-    if P == '':
-        return True
-    if P.isdigit():
         return True
     else:
         return False
@@ -48,8 +42,7 @@ def setup_window():
 
 
     # register the logic of validation function
-    validation_work = new_window.register(validate_int_work)
-    validation_break = new_window.register(validate_int_break)
+    validate = new_window.register(validate_int)
 
 
 
@@ -60,7 +53,7 @@ def setup_window():
     global worktime_input
 
     #call the logic of validation when key is pressed, validatecommand to callout the validation logic
-    worktime_input = customtkinter.CTkEntry(master=new_window, placeholder_text=set_work_global, validate="key", validatecommand=(validation_work, "%P"))
+    worktime_input = customtkinter.CTkEntry(master=new_window, placeholder_text=set_work_global, validate="key", validatecommand=(validate, "%P"))
     worktime_input.grid(row =1, column=2, sticky='ew')
     mintues_label = customtkinter.CTkLabel(new_window, text=" min(s) ")
     mintues_label.grid(row=1, column=3)
@@ -71,11 +64,20 @@ def setup_window():
     global breaktime_input
 
     #call the logic of validation when key is pressed, validatecommand to callout the validation logic
-    breaktime_input = customtkinter.CTkEntry(master=new_window, placeholder_text=set_break_global, validate="key", validatecommand=(validation_break, "%P"))
+    breaktime_input = customtkinter.CTkEntry(master=new_window, placeholder_text=set_break_global, validate="key", validatecommand=(validate, "%P"))
     breaktime_input.grid(row=2, column=2, sticky='ew')
 
     mintues_label = customtkinter.CTkLabel(new_window, text=" min(s) ")
     mintues_label.grid(row=2, column=3)
+
+    #Gap time module
+    global gaptime_input
+    gaptime = customtkinter.CTkLabel(new_window, width = 50, text="Buzz me randomly within: ", )
+    gaptime.grid(row=3, column=1)
+    gaptime_input = customtkinter.CTkEntry(master=new_window, placeholder_text=set_gap_global // 60, validate="key", validatecommand=(validate, "%P"))
+    gaptime_input.grid(row=3, column=2, sticky='ew')
+    mintues_label = customtkinter.CTkLabel(new_window, text=" min(s) ")
+    mintues_label.grid(row=3, column=3)
     
     #format
     format_label = customtkinter.CTkLabel(new_window, height = 20, width = 20, text="")
@@ -89,9 +91,11 @@ def setup_window():
 save_count = 0
 set_break_global = 5
 set_work_global = 25
+set_gap_global = 120
 workstreak = pathlib.Path('log/workstreak.csv')
 time_started = datetime.datetime.now().strftime('%H:%M:%S')
 time_started_save = time_started
+randombuzzcycle = True
 
 class PomodoroClock:
     def __init__(self, master):
@@ -139,6 +143,9 @@ class PomodoroClock:
             elif int(worktime_input.get()) > 30:
                 messagebox.showinfo('Value Error - Work time','Work time too long! Please set it between 5 to 30 mins')
                 return None
+            elif int(gaptime_input.get()) * 60 < int(worktime_input.get()) * 60:
+                messagebox.showinfo('Value Error - Gap Time','Gap time too short! Please set it above 1 minute')
+                return None
         except ValueError as e:
             return None
         global set_work_global
@@ -151,8 +158,11 @@ class PomodoroClock:
             set_break_global = int(breaktime_input.get())
         except:
             pass
+        global set_gap_global
+        set_gap_global = int(gaptime_input.get()) * 60
+        print(f'changed gap time to {set_gap_global} secs')
         new_window.destroy()
-        messagebox.showinfo('Success!', 'Change will take effect after next break')
+        messagebox.showinfo('Success!', 'Work & Break time change will take effect after next break')
 
     def time_to_string(self, time):
         minutes = time // 60
@@ -239,7 +249,23 @@ class PomodoroClock:
             writer._save()
                 
         return f"Your current work streak: {work}"
-        
+    def randombuzzer(self, set_gap_global):
+        global randombuzzcycle
+        if self.running:
+            randombuzzcycle = False
+            # set_gap_global = 5 # delete hash for testing
+            print(f'randombuzzer debug message::buzzer cycle is set to {randombuzzcycle} now')
+            sleeping_time = random.randint(60, set_gap_global)
+            print(f'randombuzzer debug message::sleeping time: {sleeping_time} secs')
+            time.sleep(sleeping_time)
+            waitsec = random.randint(10, 15)
+            messagebox.showinfo('random buzzer', f"Take a break for {waitsec} secs! I will notify you when time\'s up")
+            print(f'randombuzzer debug message::I will sleep for {waitsec} secs from now on')
+            time.sleep(waitsec)
+            messagebox.showinfo("Time\'s up!", 'Time to work!')
+            randombuzzcycle = True
+            print(f'randombuzzer debug message::buzzer cycle is set to {randombuzzcycle} now, I had slept for {waitsec} secs before you closed the messagebox window')
+
     def update_clock(self):
         if self.running:
             self.current_time -= 1
@@ -264,6 +290,8 @@ class PomodoroClock:
                 self.current_time = set_work_global * 60 #convert to min
                 self.break_time = set_break_global * 60 #convert to min
                 messagebox.showinfo('Time\'s up', 'Time for work!')
+            if randombuzzcycle == True:
+                threading.Thread(target=self.randombuzzer, group=None, args=(set_gap_global,)).start()
             self.timer = self.master.after(1000, self.update_clock)
         else:
             self.current_time = set_work_global
@@ -271,7 +299,8 @@ class PomodoroClock:
     def start(self):
         if not self.running:
             self.running = True
-            self.update_clock()
+            threading.Thread(target=self.update_clock, group=None).start()
+            
 
     def stop(self):
         if self.running:
@@ -292,8 +321,9 @@ root = customtkinter.CTk()
 clock = PomodoroClock(root)
 
 
-
 root.attributes('-topmost', 1)
-root.geometry("170x270")
+root.geometry("210x270")
 root.geometry("+400+300")
+
 root.mainloop()
+
